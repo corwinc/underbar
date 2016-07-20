@@ -204,12 +204,26 @@
   // Determine whether all of the elements match a truth test.
   _.every = function(collection, iterator) {
     // TIP: Try re-using reduce() here.
+    if (collection.length == 0) return true;
+    if (arguments.length == 1) iterator = _.identity;
+
+    return _.reduce(collection, function(allFound, x) {
+      return !!iterator(x) && allFound;
+    }, true);
   };
+
+
 
   // Determine whether any of the elements pass a truth test. If no iterator is
   // provided, provide a default one
   _.some = function(collection, iterator) {
     // TIP: There's a very clever way to re-use every() here.
+    if (collection.length == 0) return false;
+    if (arguments.length == 1) iterator = _.identity;
+
+    return _.reduce(collection, function(someFound, x) {
+      return !!iterator(x) || someFound;
+    }, false);
   };
 
 
@@ -232,11 +246,27 @@
   //     bla: "even more stuff"
   //   }); // obj1 now contains key1, key2, key3 and bla
   _.extend = function(obj) {
+    for (var i = 1; i < arguments.length; i++) {
+      var passedObj = arguments[i];
+      for (var x in passedObj) {
+        obj[x] = passedObj[x];
+      };
+    };
+    return obj;
   };
 
   // Like extend, but doesn't ever overwrite a key that already
   // exists in obj
   _.defaults = function(obj) {
+    for (var i = 1; i < arguments.length; i++) {
+      var passedObj = arguments[i];
+      for (var x in passedObj) {
+        if (!(x in obj)) {
+          obj[x] = passedObj[x];
+        };
+      };
+    };
+    return obj;
   };
 
 
@@ -280,6 +310,31 @@
   // already computed the result for the given argument and return that value
   // instead if possible.
   _.memoize = function(func) {
+    var cache = {};
+    var slice = Array.prototype.slice;
+
+    return function () {
+      var args = slice.call(arguments);
+      var result;
+
+      if (args in cache) {
+        return cache[args];
+      };
+
+      // NEED TO DIFFERENTIATE BETWEEN [1, 2, 3] AND 1, 2, 3
+      // ALT ATTEMPTS AT PASSING: 'should run function twice when given an array and then given a list of arguments'
+      // if (cache.hasOwnProperty(args)) {
+      //   return cache[args];
+      // }
+
+      // WHEN CACHE = [];
+      // if (cache.indexOf(args) != -1) {
+      //   return cache[args];
+      // };
+
+      cache[args] = func.apply(this, args);
+      return cache[args];
+    };
   };
 
   // Delays a function for the given number of milliseconds, and then calls
@@ -289,6 +344,14 @@
   // parameter. For example _.delay(someFunction, 500, 'a', 'b') will
   // call someFunction('a', 'b') after 500ms
   _.delay = function(func, wait) {
+    if (arguments.length > 2) {
+      var args = [];
+      for (var i = 2; i < arguments.length; i++) {
+        args.push(arguments[i]);
+      }
+      return setTimeout(func, wait, args[0], args[1], args[3], args [4]);
+    };
+    return setTimeout(func, wait);
   };
 
 
@@ -303,7 +366,22 @@
   // input array. For a tip on how to make a copy of an array, see:
   // http://mdn.io/Array.prototype.slice
   _.shuffle = function(array) {
+    var clonedArray = array.slice();
+    var i = array.length, savedValue, iRandom;
+
+    while (i > 0) {
+      iRandom = Math.floor(Math.random() * i);
+      i--;
+
+      savedValue = clonedArray[i];
+      clonedArray[i] = clonedArray[iRandom];
+      clonedArray[iRandom] = savedValue;
+    }
+
+    return clonedArray;
   };
+  // [0, 1, 2, 3, 4, 5]
+
 
 
   /**
